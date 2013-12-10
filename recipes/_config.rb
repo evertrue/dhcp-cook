@@ -2,6 +2,10 @@
 DHCP::Failover.load(node)
 DHCP::DynaDns.load(node)
 
+zone_keys = {
+  node['dhcp']['rndc_key'] => Chef::EncryptedDataBagItem.load("secrets","rndc_keys")[node['dhcp']['rndc_key']]
+}
+
 #
 # Global DHCP config settings
 #
@@ -11,11 +15,11 @@ template node[:dhcp][:config_file] do
   mode 0644
   source "dhcpd.conf.erb"
   variables(
-    :allows => node[:dhcp][:allows] || [], 
+    :allows => node[:dhcp][:allows] || [],
     :parameters =>  node[:dhcp][:parameters] || [],
     :options =>  node[:dhcp][:options] || [],
-    :masters => DHCP::DynaDns.masters,
-    :keys => DHCP::DynaDns.keys, 
+    :masters => node[:dhcp][:zone_masters],
+    :keys => zone_keys,
     :my_ip => node[:ipaddress],
     :role => DHCP::Failover.role,
     :peer_ip => DHCP::Failover.peer,
